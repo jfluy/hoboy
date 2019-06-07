@@ -112,7 +112,7 @@ find_extreme_dates(clim)
 
 # First, let's find the average temperature
 
-calc_HI <- function(clim) {
+calc_HI <- function(clim, low, med, high) {
 
 avg_temp <- data.frame(avg_tmp = NA, date = clim$date, "heat index" = NA)
 
@@ -123,10 +123,10 @@ for (i in 1:nrow(avg_temp)) {
 # Now, let's assign heat index values for each of the average temperatures
 
 for (i in 1:nrow(avg_temp)) {
-  avg_temp$heat.index[i] = ifelse(avg_temp$avg_tmp[i] < 7, 0, avg_temp$heat.index[i]) 
-  avg_temp$heat.index[i] = ifelse(avg_temp$avg_tmp[i] > 7 & avg_temp$avg_tmp[i] < 9, 1, avg_temp$heat.index[i])
-  avg_temp$heat.index[i] = ifelse(avg_temp$avg_tmp[i] > 9 & avg_temp$avg_tmp[i] < 11, 2, avg_temp$heat.index[i])
-  avg_temp$heat.index[i] = ifelse(avg_temp$avg_tmp[i] > 11, 3, avg_temp$heat.index[i])
+  avg_temp$heat.index[i] = ifelse(avg_temp$avg_tmp[i] < low, 0, avg_temp$heat.index[i]) 
+  avg_temp$heat.index[i] = ifelse(avg_temp$avg_tmp[i] > low & avg_temp$avg_tmp[i] < med, 1, avg_temp$heat.index[i])
+  avg_temp$heat.index[i] = ifelse(avg_temp$avg_tmp[i] > med & avg_temp$avg_tmp[i] < high, 2, avg_temp$heat.index[i])
+  avg_temp$heat.index[i] = ifelse(avg_temp$avg_tmp[i] > high, 3, avg_temp$heat.index[i])
 }
 
 zero <- sum(avg_temp$heat.index==0)
@@ -142,7 +142,7 @@ HI_count <- data.frame("Heat Index" = heat_index, "Number of Days"=count_days)
 return(HI_count)
 }
 
-calc_HI(clim)
+poopoo <- calc_HI(clim, 7, 9, 11)
 
 
 ## Function that calculates drought stress
@@ -164,7 +164,6 @@ for ( i in 7:last_row) {
   
   cwd_clim$drought_stress[i] = ifelse(cwd_clim$avg_cwd[i] > 900, 1, 0)
 }
-
 
 
 ```
