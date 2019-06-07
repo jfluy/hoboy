@@ -70,11 +70,7 @@ Value: Production (money)
 Create sample array data
 ```{r}
 
-location_num <- 5
-veg_num <- 3
-pollution <- 2
-
-drought_thresh = array(dim=c(location_num,veg_num, pollution))
+drought_thresh = array(dim=c(5,3,2))
 
 for (i in 1:5) {
   for (j in 1:3) {
@@ -93,42 +89,7 @@ dimnames(drought_thresh) = list(c("USA","Switzerland","Maldives","Uruguay","Bots
 drought_thresh
 
 
-drought_thresh2 = array(dim=c(location_num,veg_num, pollution))                  
-for (i in 1:5) {
-  for (j in 1:3) {
-    for (k in 1:2) {
-      value = calc_drought_cost(clim, clim$aet, clim$pet, drought_thresh[i,j,k], 50)
-    drought_thresh2[i,j,k]=value
-    }
-  }
-}
-
-dimnames(drought_thresh2) = list(c("USA","Switzerland","Maldives","Uruguay","Botswana"), 
-                      c("Riparian Woodland","Coastal Sage Scrub","Deciduous Forest"),
-                      c("Polluted","Non-Polluted"))
-
-drought_thresh2
-
-
-```
-
-```{r}
-
-# Each place has a different threshold that constitutes a drought 
-# Each combination of dimensions has its own unique drought threshold, so if you want to test everything at once then you can just use a function to determine the number of drought days per location. Then multiply the cost per drought day.
-# populate with values (we are just guessing, ideally this is where measuring would occur)
-
-# add useful names
-
-
-
-
-
-```
-
-
-
-
+calc_drought_cost_array(drought_thresh, clim)
 
 ```
 
