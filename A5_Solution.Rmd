@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 n_days = 365
 
 ppt <- rnorm(n_days, mean = 320, sd = 75)
-pet <- rnorm(n_days, mean = 900, sd = 500)
+pet <- rnorm(n_days, mean = 900, sd = 200)
 aet <- rnorm(n_days, mean = 2000, sd = 100)
 tmax <- rnorm(n_days, mean = 10.5, sd = 3)
 tmin <- rnorm(n_days, mean = 7.5, sd = 3)
@@ -27,76 +27,13 @@ clim <- data.frame(ppt = ppt, pet = pet, aet = aet, tmax = tmax, tmin = tmin, da
 ##Function Group 1: Summarize Data 
 ```{r}
 
-## Mean summer precipitation
-## Summer calendar days of the year: 151 to 241
-
-library(stringr)
-
-calc_mean_summer_val <- function(clim, var_name) {
-
-clim2 <- data.frame(Variable = var_name, date = clim$date)
-clim2$date <- as.character(clim2$date)
-
-jun <- clim2 %>% filter(str_detect(date, "-06-"))
-jul <- clim2 %>% filter(str_detect(date, "-07-"))
-aug <- clim2 %>% filter(str_detect(date, "-08-"))
-
-summer_months <- rbind(jun, jul, aug)
-
-sum_avg_val <- mean(summer_months$Variable)
-
-return(sum_avg_val)
-}
-
-booboo <- calc_mean_summer_val(clim, clim$aet)
+source("R/calc_mean_summer_val.R")
+calc_mean_summer_val(clim, clim$tmin)
 
 ## Find which days of the year have the most extreme climate values
 ## This only works if the the date column is called "date"!
 
-find_extreme_dates <- function(clim, min_xtreme = FALSE) {
-  
-# Change data format so date is the rowname
-col_num <- which(colnames(clim)=="date")
-clim_tmp <- clim[,-col_num]
-rownames(clim_tmp) <- clim[,col_num]
-
-
-# Create temp data frame for maximums
-clim_var_names <- colnames(clim_tmp)
-
-tmp_data <- data.frame(clim_var = clim_var_names, max = NA, day = NA)
-
-for (i in 1:length(clim_tmp)) {
-  tmp_data$max[i] = max(clim_tmp[i])
-}
-
-xtreme_dates <- rownames(clim_tmp)[apply(clim_tmp,2,which.max)]
-
-tmp_data$day <- xtreme_dates
-
-tmp_data2 <- data.frame("Climate Variable" = clim_var_names, "Maximum Value" = tmp_data$max, Date = tmp_data$day)
-
-if(min_xtreme) {
-  
-  min_data <- data.frame(clim_var = clim_var_names, min = NA, day = NA)
-
-for (i in 1:length(clim_tmp)) {
-  min_data$min[i] = min(clim_tmp[i])
-}
-
-xtreme_min_dates <- rownames(clim_tmp)[apply(clim_tmp,2,which.min)]
-
-min_data$day <- xtreme_dates
-
-min_data2 <- data.frame("Climate Variable" = clim_var_names, "Minimum Value" = min_data$min, Date = min_data$day)
-
-return(Minimums = min_data2)
-}
-
-else(return(Maximums = tmp_data2))
-
-}
-
+source("R/find_extreme_dates.R")
 find_extreme_dates(clim, min_xtreme = TRUE)
 
 ```
@@ -111,85 +48,89 @@ find_extreme_dates(clim, min_xtreme = TRUE)
 # 9-11 degrees = 2
 # Over 11 degrees = 3
 
-# Let's find how many days of the year that it will be under each value of heat stress and total days where it goes under heat stress.
-
-# First, let's find the average temperature
-
-calc_HI <- function(clim, low, med, high) {
-
-avg_temp <- data.frame(avg_tmp = NA, date = clim$date, "heat index" = NA)
-
-for (i in 1:nrow(avg_temp)) {
-  avg_temp$avg_tmp[i] = (clim$tmax[i]+clim$tmin[i])/2
-}
-
-# Now, let's assign heat index values for each of the average temperatures
-
-for (i in 1:nrow(avg_temp)) {
-  avg_temp$heat.index[i] = ifelse(avg_temp$avg_tmp[i] < low, 0, avg_temp$heat.index[i]) 
-  avg_temp$heat.index[i] = ifelse(avg_temp$avg_tmp[i] > low & avg_temp$avg_tmp[i] < med, 1, avg_temp$heat.index[i])
-  avg_temp$heat.index[i] = ifelse(avg_temp$avg_tmp[i] > med & avg_temp$avg_tmp[i] < high, 2, avg_temp$heat.index[i])
-  avg_temp$heat.index[i] = ifelse(avg_temp$avg_tmp[i] > high, 3, avg_temp$heat.index[i])
-}
-
-zero <- sum(avg_temp$heat.index==0)
-one <- sum(avg_temp$heat.index==1)
-two <- sum(avg_temp$heat.index==2)
-three <- sum(avg_temp$heat.index==3)
-
-heat_index <- c("0", "1","2", "3")
-count_days <- c(zero, one, two, three)
-
-HI_count <- data.frame("Heat Index" = heat_index, "Number of Days"=count_days)
-
-return(HI_count)
-}
+source("R/calc_HI.R")
 
 poopoo <- calc_HI(clim, 7, 9, 11)
 
+## Function that calculates the cost of drought
+# Calculate drought costs
 
-## Function that calculates drought stress
+source("R/calc_drought_risk.R")
+calc_drought_risk(clim, clim$aet, clim$pet, 1500)
+# (data, aet, pet, drought_threshold, cost per drought day)
 
-# Calculate CWD
+```
 
-calc_drought_risk <- function(clim, aet, pet, drought_threshold) {
-  
-cwd_clim <- data.frame(aet = aet, pet = pet, cwd = NA, drought_stress = NA, avg_cwd = NA)
-  
-for (i in 1:nrow(clim)) {
-  cwd_clim$cwd[i] = cwd_clim$aet[i]-cwd_clim$pet[i]
+1. Pollution (polluted v. non-polluted)
+2. Location 1, 2, 3
+3. Veg communities A, B, C
+Value: Production (money)
+
+
+Create sample array data
+```{r}
+
+location_num <- 5
+veg_num <- 3
+pollution <- 2
+
+drought_thresh = array(dim=c(location_num,veg_num, pollution))
+
+for (i in 1:5) {
+  for (j in 1:3) {
+    for (k in 1:2) {
+      value = runif(min=500,max=2000,n=1)
+    drought_thresh[i,j,k]=value
+    }
+  }
 }
 
-# Calculate average CWD over a period of 7 days 
-last_row = nrow(cwd_clim) - 7
 
-# If average is under Xmm, then the species will likely dessicate
+dimnames(drought_thresh) = list(c("USA","Switzerland","Maldives","Uruguay","Botswana"), 
+                      c("Riparian Woodland","Coastal Sage Scrub","Deciduous Forest"),
+                      c("Polluted","Non-Polluted"))
 
-for ( i in 7:last_row) {
-  cwd_clim$avg_cwd[i] = mean(cwd_clim$cwd[i-6],cwd_clim$cwd[i-5],cwd_clim$cwd[i-4],cwd_clim$cwd[i-3], cwd_clim$cwd[i-2],cwd_clim$cwd[i-1],cwd_clim$cwd[i], cwd_clim$cwd[i+6],cwd_clim$cwd[i+5],cwd_clim$cwd[i+4],cwd_clim$cwd[i+3], cwd_clim$cwd[i+2],cwd_clim$cwd[i+1])
-  
-  cwd_clim$drought_stress[i] = ifelse(cwd_clim$avg_cwd[i] > drought_threshold, 1, 0)
+drought_thresh
+
+
+drought_thresh2 = array(dim=c(location_num,veg_num, pollution))                  
+for (i in 1:5) {
+  for (j in 1:3) {
+    for (k in 1:2) {
+      value = calc_drought_cost(clim, clim$aet, clim$pet, drought_thresh[i,j,k], 50)
+    drought_thresh2[i,j,k]=value
+    }
+  }
 }
 
+dimnames(drought_thresh2) = list(c("USA","Switzerland","Maldives","Uruguay","Botswana"), 
+                      c("Riparian Woodland","Coastal Sage Scrub","Deciduous Forest"),
+                      c("Polluted","Non-Polluted"))
 
-# Average cwd DURING days that ARE droughts. Not Average CWD for the year.
-av_drought <- cwd_clim %>% 
-  filter(drought_stress == 1)
+drought_thresh2
 
-one <- nrow(av_drought)
 
-av_drought2 <- mean(av_drought$avg_cwd)
+```
 
-return(list(Danger_days = one, Average_Drought = av_drought2))
+```{r}
 
-}
+# Each place has a different threshold that constitutes a drought 
+# Each combination of dimensions has its own unique drought threshold, so if you want to test everything at once then you can just use a function to determine the number of drought days per location. Then multiply the cost per drought day.
+# populate with values (we are just guessing, ideally this is where measuring would occur)
 
-calc_drought_risk(clim, clim$aet, clim$pet, 2000)
+# add useful names
+
+
+
 
 
 ```
 
 
+
+
+
+```
 
 
 

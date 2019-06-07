@@ -1,4 +1,4 @@
-calc_drought_risk <- function(clim, aet, pet, drought_threshold) {
+calc_drought_cost <- function(clim, aet, pet, drought_threshold, cost_per_drought_day) {
   
   cwd_clim <- data.frame(aet = aet, pet = pet, cwd = NA, drought_stress = NA, avg_cwd = NA)
   
@@ -26,13 +26,12 @@ calc_drought_risk <- function(clim, aet, pet, drought_threshold) {
   
   av_drought2 <- mean(av_drought$avg_cwd)
   
-  # Average cwd for the entire year regardless if it is during drought.
-  
   av_cwd <- cwd_clim %>% filter(!is.na(drought_stress))
   
   av_cwd <- mean(av_cwd$avg_cwd)
   
+  cost <- one*(cost_per_drought_day)
   
-  return(list(Danger_Days = one, Average_Drought = av_drought, Average_CWD = av_cwd))
+  return(cost)
   
 }
