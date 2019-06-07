@@ -32,21 +32,23 @@ clim <- data.frame(ppt = ppt, pet = pet, aet = aet, tmax = tmax, tmin = tmin, da
 
 library(stringr)
 
-calc_mean_summer_ppt <- function(clim) {
-clim$date<- as.character(clim$date)
+calc_mean_summer_val <- function(clim, var_name) {
 
-jun <- clim %>% filter(str_detect(date, "-06-"))
-jul <- clim %>% filter(str_detect(date, "-07-"))
-aug <- clim %>% filter(str_detect(date, "-08-"))
+clim2 <- data.frame(Variable = var_name, date = clim$date)
+clim2$date <- as.character(clim2$date)
+
+jun <- clim2 %>% filter(str_detect(date, "-06-"))
+jul <- clim2 %>% filter(str_detect(date, "-07-"))
+aug <- clim2 %>% filter(str_detect(date, "-08-"))
 
 summer_months <- rbind(jun, jul, aug)
 
-sum_avg_ppt <- mean(summer_months$ppt)
+sum_avg_val <- mean(summer_months$Variable)
 
-return(sum_avg_ppt)
+return(sum_avg_val)
 }
 
-calc_mean_summer_ppt(clim)
+booboo <- calc_mean_summer_val(clim, clim$aet)
 
 ## Find which days of the year have the most extreme climate values
 ## This only works if the last column is date!
